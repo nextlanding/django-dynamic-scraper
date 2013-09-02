@@ -51,7 +51,7 @@ class TaskUtils():
         ref_obj_list = ref_obj_class.objects.filter(**kwargs).order_by('%s__next_action_time' % runtime_field_name)[:max]
         if not self._pending_jobs(spider_name):
             for ref_object in ref_obj_list:
-                self._run_spider(id=ref_object.id, spider=spider_name, run_type='TASK', do_action='yes')
+                self._run_spider(id=ref_object.pk, spider=spider_name, run_type='TASK', do_action='yes')
         
 
     def run_checkers(self, ref_obj_class, scraper_field_path, runtime_field_name, checker_name):
@@ -68,7 +68,7 @@ class TaskUtils():
         ref_obj_list = ref_obj_class.objects.filter(**kwargs).exclude(**kwargs2).order_by('%s__next_action_time' % runtime_field_name)[:max]
         if not self._pending_jobs(checker_name):
             for ref_object in ref_obj_list:
-                self._run_spider(id=ref_object.id, spider=checker_name, run_type='TASK', do_action='yes')
+                self._run_spider(id=ref_object.pk, spider=checker_name, run_type='TASK', do_action='yes')
 
 
     def run_checker_tests(self):
