@@ -145,7 +145,7 @@ class ScraperElem(models.Model):
     reg_exp = models.CharField(max_length=200, blank=True)
     from_detail_page = models.BooleanField()
     processors = models.CharField(max_length=200, blank=True)
-    proc_ctxt = models.CharField(max_length=200, blank=True)
+    proc_ctxt = models.CharField(max_length=8000, blank=True)
     mandatory = models.BooleanField(default=True)
 
 
