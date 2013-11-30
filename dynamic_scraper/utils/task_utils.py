@@ -90,6 +90,9 @@ class ProcessBasedUtils(TaskUtils):
     # how to get settings: http://stackoverflow.com/questions/15564844/locally-run-all-of-the-spiders-in-scrapy
 
     def _run_crawl_process(self, **kwargs):
+        #log.start must be explicitly called
+        log.start()
+
         # region How to run a crawler in-process
         # examples on how to get this stuff:
         # http://stackoverflow.com/questions/14777910/scrapy-crawl-from-script-always-blocks-script-execution-after-scraping?lq=1
@@ -105,7 +108,7 @@ class ProcessBasedUtils(TaskUtils):
         spider = crawler.spiders.create(kwargs['spider'], **kwargs)
         crawler.crawl(spider)
 
-        log.start()
+
         log.msg('Spider started...')
         crawler.start()
         log.msg('Spider stopped.')
