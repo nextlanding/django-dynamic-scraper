@@ -58,6 +58,7 @@ class Scraper(models.Model):
         ('R', 'RANGE_FUNCT'),
         ('F', 'FREE_LIST'),
         ('O', 'FOLLOW'),
+        ('C', 'CAPTURE'),
     )
     CHECKER_TYPE = (
         ('N', 'NONE'),
