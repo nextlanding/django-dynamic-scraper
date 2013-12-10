@@ -222,62 +222,65 @@ class DjangoSpider(DjangoBaseSpider):
       items_left = min(len(base_objects), self.conf['MAX_ITEMS_READ'] - self.items_read_count)
       base_objects = base_objects[0:items_left]
 
-    for obj in base_objects:
-      item_num = self.items_read_count + 1
-      self.log("Starting to crawl item %s." % str(item_num), log.INFO)
-      item = self.parse_item(response, obj)
-      #print item
-      url_name = url_elem.scraped_obj_attr.name
-      if (item and url_name in item):
-        url = item[url_name]
-        cnt = self.scraped_obj_class.objects.filter(url=item[url_name]).count()
-        cnt1 = self.scraper.get_standard_update_elems_from_detail_page().count()
-        cnt2 = self.scraper.get_from_detail_page_scrape_elems().count()
-        # Mark item as DOUBLE item
-        if cnt > 0:
-          item[url_name] = 'DOUBLE' + item[url_name]
-          # (DOUBLE item with no standard update elements to be scraped from detail page) or
-        # generally no attributes scraped from detail page
-        if (cnt > 0 and cnt1 == 0) or cnt2 == 0:
-          yield item
-        else:
-          yield Request(url, callback=self.parse_item, meta={'item': item})
-      else:
-        self.log("Detail page url elem could not be read!", log.ERROR)
-
-    if base_objects and self.scraper.pagination_type == 'O':
-      try:
-        url = xs.select(self.scraper.pagination_page_replace).extract()[0]
-        url = urljoin(response.url, url)
-        yield Request(url)
-      except:
-        self.log("{0} was not found in {1}".format(self.scraper.pagination_page_replace, response.url), log.ERROR)
-
-    if base_objects and self.scraper.pagination_type == 'C':
-      if not hasattr(self, 'capture_urls'):
-        try:
-          xpath_and_re = self.scraper.pagination_page_replace.split("^|^")
-
-          xpath = xpath_and_re[0].strip()
-
-          xpath_results = xs.select(xpath)
-
-          if len(xpath_and_re) > 1:
-            re = xpath_and_re[1].strip()
-            self.capture_urls = xpath_results.re(re)
+    #there is an edge case where multpile pages are crawled at once (becuase of range pagination). This will prevent
+    # the MAX_READ_COUNT from being ignored.
+    if items_left > 0:
+      for obj in base_objects:
+        item_num = self.items_read_count + 1
+        self.log("Starting to crawl item %s." % str(item_num), log.INFO)
+        item = self.parse_item(response, obj)
+        #print item
+        url_name = url_elem.scraped_obj_attr.name
+        if (item and url_name in item):
+          url = item[url_name]
+          cnt = self.scraped_obj_class.objects.filter(url=item[url_name]).count()
+          cnt1 = self.scraper.get_standard_update_elems_from_detail_page().count()
+          cnt2 = self.scraper.get_from_detail_page_scrape_elems().count()
+          # Mark item as DOUBLE item
+          if cnt > 0:
+            item[url_name] = 'DOUBLE' + item[url_name]
+            # (DOUBLE item with no standard update elements to be scraped from detail page) or
+          # generally no attributes scraped from detail page
+          if (cnt > 0 and cnt1 == 0) or cnt2 == 0:
+            yield item
           else:
-            self.capture_urls = xpath_results.extract()
+            yield Request(url, callback=self.parse_item, meta={'item': item})
+        else:
+          self.log("Detail page url elem could not be read!", log.ERROR)
 
-          self.capture_urls  = deque(self.capture_urls )
-
+      if base_objects and self.scraper.pagination_type == 'O':
+        try:
+          url = xs.select(self.scraper.pagination_page_replace).extract()[0]
+          url = urljoin(response.url, url)
+          yield Request(url)
         except:
           self.log("{0} was not found in {1}".format(self.scraper.pagination_page_replace, response.url), log.ERROR)
 
-      try:
-        url = self.capture_urls.popleft()
-      except IndexError:
-        url = None
+      if base_objects and self.scraper.pagination_type == 'C':
+        if not hasattr(self, 'capture_urls'):
+          try:
+            xpath_and_re = self.scraper.pagination_page_replace.split("^|^")
 
-      if url:
-        url = urljoin(response.url, url)
-        yield Request(url)
+            xpath = xpath_and_re[0].strip()
+
+            xpath_results = xs.select(xpath)
+
+            if len(xpath_and_re) > 1:
+              re = xpath_and_re[1].strip()
+              self.capture_urls = xpath_results.re(re)
+            else:
+              self.capture_urls = xpath_results.extract()
+
+            self.capture_urls  = deque(self.capture_urls )
+
+          except:
+            self.log("{0} was not found in {1}".format(self.scraper.pagination_page_replace, response.url), log.ERROR)
+
+        try:
+          url = self.capture_urls.popleft()
+        except IndexError:
+          url = None
+
+        if url:
+          url = urljoin(response.url, url)
+          yield Request(url)
