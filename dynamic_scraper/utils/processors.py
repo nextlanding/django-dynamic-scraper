@@ -114,6 +114,10 @@ def duration(text, loader_context):
 
 
 def dynamic(text, loader_context):
-    func_name = loader_context.pop('func')
-    f = load_object(func_name)
-    return f(text, loader_context)
+    if text:
+      func_name = loader_context.pop('func')
+      f = load_object(func_name)
+      ret_val = f(text, loader_context)
+    else:
+      ret_val = text
+    return ret_val
