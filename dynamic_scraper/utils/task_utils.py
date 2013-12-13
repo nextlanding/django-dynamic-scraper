@@ -128,6 +128,7 @@ class ProcessBasedUtils(TaskUtils):
       if cache.add(cache_key, True):
 
         logger.debug("Cache added: {0}".format(cache_key))
+        print("Cache added: {0}".format(cache_key))
 
         try:
           param_dict = {
@@ -144,6 +145,7 @@ class ProcessBasedUtils(TaskUtils):
 
         finally:
           logger.debug("Cache removed: {0}".format(cache_key))
+          print("Cache removed: {0}".format(cache_key))
           cache.delete(cache_key)
 
       else:
