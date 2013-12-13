@@ -126,6 +126,9 @@ class ProcessBasedUtils(TaskUtils):
       cache_key = "{0}-lock-{1}".format(kwargs['spider'], kwargs['id'])
 
       if cache.add(cache_key, True):
+
+        logger.debug("Cache added: {0}".format(cache_key))
+
         try:
           param_dict = {
               'project': 'default',
@@ -140,6 +143,7 @@ class ProcessBasedUtils(TaskUtils):
           p.join()
 
         finally:
+          logger.debug("Cache removed: {0}".format(cache_key))
           cache.delete(cache_key)
 
       else:
