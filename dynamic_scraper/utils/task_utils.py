@@ -6,6 +6,10 @@ from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 settings = get_project_settings()
 from dynamic_scraper.models import Scraper
+from django.core.cache import cache
+import logging
+
+logger = logging.getLogger(__name__)
 
 class TaskUtils():
     
@@ -114,18 +118,32 @@ class ProcessBasedUtils(TaskUtils):
         log.msg('Spider stopped.')
         crawler.stop()
 
-    def _run_spider(self, **kwargs):
-        param_dict = {
-            'project': 'default',
-            'spider': kwargs['spider'],
-            'id': kwargs['id'],
-            'run_type': kwargs['run_type'],
-            'do_action': kwargs['do_action']
-        }
 
-        p = Process(target=self._run_crawl_process, kwargs=param_dict)
-        p.start()
-        p.join()
+    def _run_spider(self, **kwargs):
+      # the reason we're checking here and not `pending_jobs` is because this gives more useful info to make the
+      # decision
+
+      cache_key = "{0}-lock-{1}".format(kwargs['spider'], kwargs['id'])
+
+      if cache.add(cache_key, True):
+        try:
+          param_dict = {
+              'project': 'default',
+              'spider': kwargs['spider'],
+              'id': kwargs['id'],
+              'run_type': kwargs['run_type'],
+              'do_action': kwargs['do_action']
+          }
+
+          p = Process(target=self._run_crawl_process, kwargs=param_dict)
+          p.start()
+          p.join()
+
+        finally:
+          cache.delete(cache_key)
+
+      else:
+        logger.info("Spider not started. {0} is alreadying running".format(cache_key))
 
     def _pending_jobs(self, spider):
         # don't worry about scheduling new jobs if there are still pending jobs for same spider
