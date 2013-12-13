@@ -222,16 +222,9 @@ class DjangoSpider(DjangoBaseSpider):
       items_left = min(len(base_objects), self.conf['MAX_ITEMS_READ'] - self.items_read_count)
       #there is an edge case where multpile pages are crawled at once (becuase of range pagination). This will prevent
       # the MAX_READ_COUNT from being ignored.
-      # It can also result in the first 20 items being read but the reaming hundred (paged) pages to be craweld but
-      # only to scrape 0 items per page.
-      if items_left > 0:
-        base_objects = base_objects[0:items_left]
-      else:
-        self.crawler.engine.close_spider(
-          self,
-          '0 or less items remainig to scrape. Remaining: {0}. '.format(items_left)
-        )
-        base_objects = []
+      base_objects = base_objects[0:items_left] if items_left > 0 else []
+
+
 
     for obj in base_objects:
       item_num = self.items_read_count + 1
