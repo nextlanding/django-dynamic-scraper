@@ -5,6 +5,7 @@ from scrapy import log
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 settings = get_project_settings()
+from django.conf import settings as django_settings
 from dynamic_scraper.models import Scraper
 from django.core.cache import cache
 import logging
@@ -103,7 +104,7 @@ class ProcessBasedUtils(TaskUtils):
 
 def _run_crawl_process(**kwargs):
   #log.start must be explicitly called
-  log.start()
+  log.start(loglevel=getattr(django_settings, 'SCRAPY_LOG_LEVEL', 'INFO'))
 
   # region How to run a crawler in-process
   # examples on how to get this stuff:
