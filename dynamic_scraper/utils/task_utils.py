@@ -1,6 +1,6 @@
 import datetime, json
 import urllib, urllib2, httplib
-from multiprocessing import Process
+from billiard.process import Process
 from scrapy import log
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
@@ -9,7 +9,7 @@ from django.conf import settings as django_settings
 from dynamic_scraper.models import Scraper
 from django.core.cache import cache
 import logging
-from celery.task import task
+from celery import shared_task
 
 logger = logging.getLogger(__name__)
 
@@ -105,6 +105,7 @@ class ProcessBasedUtils(TaskUtils):
 def _run_crawl_process(**kwargs):
   #log.start must be explicitly called
   log.start(loglevel=getattr(django_settings, 'SCRAPY_LOG_LEVEL', 'INFO'))
+  log.msg('******run*****')
 
   # region How to run a crawler in-process
   # examples on how to get this stuff:
@@ -115,11 +116,29 @@ def _run_crawl_process(**kwargs):
   # https://groups.google.com/forum/#!topic/scrapy-users/d4axj6nPVDw
   # endregion
 
-  crawler = CrawlerProcess(settings)
-  crawler.install()
-  crawler.configure()
-  spider = crawler.spiders.create(kwargs['spider'], **kwargs)
+  try:
+    log.msg('******crawl process*****')
+
+    crawler = CrawlerProcess(settings)
+    log.msg('******install*****')
+
+    crawler.install()
+    log.msg('******config*****')
+
+    crawler.configure()
+    log.msg('******create*****')
+
+    spider = crawler.spiders.create(kwargs['spider'], **kwargs)
+    log.msg('******post create*****')
+
+  except Exception as e:
+    print 'error'
+    log.msg(e)
+    log.msg('******error*****')
+  log.msg('******pre crawl*****')
+
   crawler.crawl(spider)
+  log.msg('******post crawl*****')
 
 
   log.msg('Spider started...')
@@ -128,7 +147,7 @@ def _run_crawl_process(**kwargs):
   crawler.stop()
 
 
-@task
+@shared_task
 def _run_spider_task(**kwargs):
 # the reason we're checking here and not `pending_jobs` is because this gives more useful info to make the
   # decision
@@ -147,7 +166,6 @@ def _run_spider_task(**kwargs):
         'run_type': kwargs['run_type'],
         'do_action': kwargs['do_action']
       }
-
       p = Process(target=_run_crawl_process, kwargs=param_dict)
       p.start()
       p.join()

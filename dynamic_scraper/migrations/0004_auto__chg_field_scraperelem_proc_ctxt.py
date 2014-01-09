@@ -13,9 +13,7 @@ class Migration(SchemaMigration):
         db.alter_column(u'dynamic_scraper_scraperelem', 'proc_ctxt', self.gf('django.db.models.fields.CharField')(max_length=8000))
 
     def backwards(self, orm):
-
-        # Changing field 'ScraperElem.proc_ctxt'
-        db.alter_column(u'dynamic_scraper_scraperelem', 'proc_ctxt', self.gf('django.db.models.fields.CharField')(max_length=200))
+      pass
 
     models = {
         u'dynamic_scraper.log': {
