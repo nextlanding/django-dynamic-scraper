@@ -105,7 +105,6 @@ class ProcessBasedUtils(TaskUtils):
 def _run_crawl_process(**kwargs):
   #log.start must be explicitly called
   log.start(loglevel=getattr(django_settings, 'SCRAPY_LOG_LEVEL', 'INFO'))
-  log.msg('******run*****')
 
   # region How to run a crawler in-process
   # examples on how to get this stuff:
@@ -116,29 +115,11 @@ def _run_crawl_process(**kwargs):
   # https://groups.google.com/forum/#!topic/scrapy-users/d4axj6nPVDw
   # endregion
 
-  try:
-    log.msg('******crawl process*****')
-
-    crawler = CrawlerProcess(settings)
-    log.msg('******install*****')
-
-    crawler.install()
-    log.msg('******config*****')
-
-    crawler.configure()
-    log.msg('******create*****')
-
-    spider = crawler.spiders.create(kwargs['spider'], **kwargs)
-    log.msg('******post create*****')
-
-  except Exception as e:
-    print 'error'
-    log.msg(e)
-    log.msg('******error*****')
-  log.msg('******pre crawl*****')
-
+  crawler = CrawlerProcess(settings)
+  crawler.install()
+  crawler.configure()
+  spider = crawler.spiders.create(kwargs['spider'], **kwargs)
   crawler.crawl(spider)
-  log.msg('******post crawl*****')
 
 
   log.msg('Spider started...')
@@ -146,10 +127,9 @@ def _run_crawl_process(**kwargs):
   log.msg('Spider stopped.')
   crawler.stop()
 
-
 @shared_task
 def _run_spider_task(**kwargs):
-# the reason we're checking here and not `pending_jobs` is because this gives more useful info to make the
+  # the reason we're checking here and not `pending_jobs` is because this gives more useful info to make the
   # decision
 
   cache_key = "{0}-lock-{1}".format(kwargs['spider'], kwargs['id'])
